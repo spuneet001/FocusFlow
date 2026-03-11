@@ -4,17 +4,29 @@ import { useAuthStore } from '../store'
 import { Btn, Card, PageHeader, StatCard, Divider, Spinner, Badge } from '../components/ui'
 import toast from 'react-hot-toast'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isThisWeek } from 'date-fns'
+
+function getMonday(date) {
+  const d = startOfWeek(date, { weekStartsOn: 1 })
+  return format(d, 'yyyy-MM-dd')
+}
 
 export default function ReportPage() {
   const { user } = useAuthStore()
   const isPro = user?.plan === 'PRO' || user?.plan === 'PREMIUM'
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
 
-  async function loadReport() {
+  const weekStartDate = new Date(weekStart + 'T00:00:00')
+  const weekEndDate = endOfWeek(weekStartDate, { weekStartsOn: 1 })
+  const isCurrent = isThisWeek(weekStartDate, { weekStartsOn: 1 })
+
+  async function loadReport(ws) {
     setLoading(true)
     try {
-      const { data } = await reportsApi.getCurrent()
+      const target = ws || weekStart
+      const { data } = await reportsApi.getByWeek(target)
       setReport(data)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to load report')
@@ -22,7 +34,17 @@ export default function ReportPage() {
     setLoading(false)
   }
 
-  useEffect(() => { loadReport() }, [])
+  useEffect(() => { loadReport() }, [weekStart])
+
+  function goToPrevWeek() {
+    const prev = format(subWeeks(weekStartDate, 1), 'yyyy-MM-dd')
+    setWeekStart(prev)
+  }
+
+  function goToNextWeek() {
+    const next = format(addWeeks(weekStartDate, 1), 'yyyy-MM-dd')
+    setWeekStart(next)
+  }
 
   const pct = report?.completionPercentage?.toFixed(0) ?? 0
 
@@ -31,8 +53,37 @@ export default function ReportPage() {
       <PageHeader
         title="Weekly Report"
         sub="Track your consistency and growth"
-        action={<Btn onClick={loadReport} loading={loading} variant="ghost">Refresh</Btn>}
+        action={<Btn onClick={() => loadReport()} loading={loading} variant="ghost">Refresh</Btn>}
       />
+
+      {/* Week Navigation */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+        marginBottom: 24, padding: '12px 0',
+      }}>
+        <button onClick={goToPrevWeek} style={{
+          background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--white)',
+          width: 36, height: 36, borderRadius: 10, fontSize: 16, fontWeight: 700,
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          ‹
+        </button>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--white)' }}>
+            {format(weekStartDate, 'MMM d')} — {format(weekEndDate, 'MMM d, yyyy')}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>
+            {isCurrent ? 'This Week' : `Week of ${format(weekStartDate, 'MMM d')}`}
+          </div>
+        </div>
+        <button onClick={goToNextWeek} style={{
+          background: 'var(--surface)', border: '1px solid var(--border2)', color: 'var(--white)',
+          width: 36, height: 36, borderRadius: 10, fontSize: 16, fontWeight: 700,
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          ›
+        </button>
+      </div>
 
       {loading && !report ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size={36} /></div>

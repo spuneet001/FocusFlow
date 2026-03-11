@@ -46,6 +46,7 @@ public class Dto {
         private String name;
         private String email;
         private User.Plan plan;
+        private String profilePictureUrl;
         private LocalDateTime createdAt;
 
         public static UserResponse from(User u) {
@@ -54,9 +55,31 @@ public class Dto {
             r.name = u.getName();
             r.email = u.getEmail();
             r.plan = u.getPlan();
+            r.profilePictureUrl = u.getProfilePictureUrl();
             r.createdAt = u.getCreatedAt();
             return r;
         }
+    }
+
+    @Data
+    public static class UpdateProfileRequest {
+        private String name;
+        private String profilePictureUrl;
+    }
+
+    @Data
+    public static class ChangePasswordRequest {
+        @NotBlank private String currentPassword;
+        @NotBlank private String newPassword;
+    }
+
+    @Data
+    public static class GalleryItem {
+        private Long taskId;
+        private String title;
+        private String photoUrl;
+        private LocalDate taskDate;
+        private LocalTime taskTime;
     }
 
     // ── Task ─────────────────────────────────────────────────────────────

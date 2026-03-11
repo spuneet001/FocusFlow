@@ -43,6 +43,9 @@ public class User {
     @Column(name = "stripe_customer_id")
     private String stripeCustomerId;
 
+    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
+    private String profilePictureUrl;
+
     @Column(name = "subscription_expires_at")
     private LocalDateTime subscriptionExpiresAt;
 

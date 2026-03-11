@@ -5,7 +5,6 @@ const NAV = [
   { to: '/tasks',        icon: '☑️',  label: 'Today\'s Tasks' },
   { to: '/agent',        icon: '🤖',  label: 'AI Agent',       pro: true },
   { to: '/report',       icon: '📊',  label: 'Weekly Report' },
-  { to: '/subscription', icon: '💳',  label: 'Subscription' },
 ]
 
 export default function Sidebar() {
@@ -55,9 +54,27 @@ export default function Sidebar() {
 
       {/* User info */}
       <div style={{ padding: '20px 22px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', marginBottom: 2 }}>{user?.name}</div>
-        <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, marginBottom: 12 }}>
-          {user?.plan || 'FREE'} PLAN
+        <div
+          onClick={() => navigate('/profile')}
+          style={{ cursor: 'pointer', marginBottom: 12 }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+              background: user?.profilePictureUrl
+                ? `url(${user.profilePictureUrl}) center/cover`
+                : 'linear-gradient(135deg, var(--accent), var(--green))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: user?.profilePictureUrl ? 0 : 12, color: '#fff', fontWeight: 700,
+              border: '2px solid var(--border2)',
+            }}>
+              {!user?.profilePictureUrl && (user?.name?.[0]?.toUpperCase() || '?')}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>{user?.name}</div>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, paddingLeft: 38 }}>
+            {user?.plan || 'FREE'} PLAN
+          </div>
         </div>
         <button onClick={handleLogout} style={{
           background: 'transparent', border: '1px solid var(--border)',

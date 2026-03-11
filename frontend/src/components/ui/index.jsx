@@ -55,8 +55,14 @@ export function Modal({ open, onClose, children, title, width = 480 }) {
         margin: 'auto',
       }}>
         {title && (
-          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--white)', marginBottom: 20 }}>
-            {title}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--white)' }}>
+              {title}
+            </div>
+            <button onClick={onClose} style={{
+              background: 'transparent', border: 'none', color: 'var(--text2)', fontSize: 18,
+              cursor: 'pointer', padding: '2px 6px', lineHeight: 1, borderRadius: 6,
+            }}>✕</button>
           </div>
         )}
         {children}

@@ -31,11 +31,14 @@ public class WeeklyReportService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     public Dto.WeeklyReportResponse getCurrentWeekReport(String email) {
+        return getReportByWeek(email, LocalDate.now().with(DayOfWeek.MONDAY));
+    }
+
+    public Dto.WeeklyReportResponse getReportByWeek(String email, LocalDate weekStart) {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        LocalDate today = LocalDate.now();
-        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
+        weekStart = weekStart.with(DayOfWeek.MONDAY);
         LocalDate weekEnd = weekStart.plusDays(6);
 
         // Always recalculate report to include latest tasks

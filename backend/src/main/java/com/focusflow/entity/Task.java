@@ -76,7 +76,7 @@ public class Task {
     @Column(name = "goal_context", columnDefinition = "TEXT")
     private String goalContext;
 
-    @Column(name = "completion_photo_url")
+    @Column(name = "completion_photo_url", columnDefinition = "TEXT")
     private String completionPhotoUrl;
 
     @Column(name = "social_shared")

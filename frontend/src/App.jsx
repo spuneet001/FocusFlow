@@ -8,6 +8,7 @@ import TasksPage from './pages/TasksPage'
 import AgentPage from './pages/AgentPage'
 import ReportPage from './pages/ReportPage'
 import SubscriptionPage from './pages/SubscriptionPage'
+import ProfilePage from './pages/ProfilePage'
 import './styles/global.css'
 
 function AppShell() {
@@ -33,6 +34,7 @@ function AppShell() {
           <Route path="/agent"        element={<AgentPage />} />
           <Route path="/report"       element={<ReportPage />} />
           <Route path="/subscription" element={<SubscriptionPage />} />
+          <Route path="/profile"      element={<ProfilePage />} />
           <Route path="*"             element={<Navigate to="/tasks" replace />} />
         </Routes>
       </main>

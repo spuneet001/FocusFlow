@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTaskStore } from '../store'
+import { tasksApi } from '../api'
 import { Btn, Card, Modal, Badge, Label, Divider, PageHeader, StatCard, Empty, Spinner } from '../components/ui'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
@@ -33,6 +34,7 @@ export default function TasksPage() {
   const [showCameraModal, setShowCameraModal] = useState(false)
   const [cameraStream, setCameraStream] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
+  const [lightboxTask, setLightboxTask] = useState(null)
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
 
@@ -89,7 +91,7 @@ export default function TasksPage() {
           }
         }
       })
-    }, 60000) // Run every 60 seconds
+    }, 30000) // Run every 30 seconds
     return () => {
       clearInterval(id)
       console.log('🛑 Alarm checker stopped')
@@ -240,9 +242,7 @@ export default function TasksPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
       console.log('✅ Camera access granted')
       setCameraStream(stream)
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
+      // videoRef may not be mounted yet; the useEffect below will attach it
     } catch (err) {
       console.error('❌ Camera error:', err)
       if (err.name === 'NotAllowedError') {
@@ -255,10 +255,20 @@ export default function TasksPage() {
     }
   }
 
+  // Attach stream to video element once both are ready
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream
+    }
+  }, [cameraStream])
+
   function capturePhoto() {
     if (videoRef.current && canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d')
-      ctx.drawImage(videoRef.current, 0, 0)
+      ctx.save()
+      ctx.scale(-1, 1)
+      ctx.drawImage(videoRef.current, -canvasRef.current.width, 0)
+      ctx.restore()
       const photoData = canvasRef.current.toDataURL('image/jpeg')
       setPhotoPreview(photoData)
       console.log('📦 Photo captured')
@@ -281,16 +291,7 @@ export default function TasksPage() {
     if (!alarmTask || !photoPreview) return
     try {
       console.log('📸 Uploading photo to backend...')
-      // Send photo to backend
-      const photoRes = await fetch(`http://localhost:8080/api/tasks/${alarmTask.id}/photo`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ photoData: photoPreview })
-      })
-      if (!photoRes.ok) throw new Error('Photo upload failed')
+      await tasksApi.uploadPhoto(alarmTask.id, photoPreview)
       console.log('✅ Photo uploaded successfully')
       
       // Now mark as done
@@ -450,11 +451,24 @@ export default function TasksPage() {
                     </div>
                   </div>
 
-                  <button onClick={() => handleDelete(t.id, t.title, t.done, t.taskDate, t.taskTime)} style={{
-                    background: 'transparent', border: 'none', color: 'var(--text2)', opacity: 0.5,
-                    cursor: 'not-allowed', fontSize: 16, padding: '4px 6px', flexShrink: 0,
-                    title: 'Cannot delete completed tasks (affects weekly report)',
-                  }}>✕</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    {t.completionPhotoUrl && (
+                      <img
+                        src={t.completionPhotoUrl}
+                        alt="Done"
+                        onClick={() => setLightboxTask(t)}
+                        style={{
+                          width: 28, height: 28, borderRadius: 6, objectFit: 'cover',
+                          border: '1px solid var(--border2)', cursor: 'pointer',
+                        }}
+                      />
+                    )}
+                    <button onClick={() => handleDelete(t.id, t.title, t.done, t.taskDate, t.taskTime)} style={{
+                      background: 'transparent', border: 'none', color: 'var(--text2)', opacity: 0.5,
+                      cursor: 'not-allowed', fontSize: 16, padding: '4px 6px', flexShrink: 0,
+                      title: 'Cannot delete completed tasks (affects weekly report)',
+                    }}>✕</button>
+                  </div>
                 </Card>
               ))}
             </>
@@ -655,6 +669,56 @@ export default function TasksPage() {
           </div>
         )}
       </Modal>
+      {/* Photo Lightbox */}
+      {lightboxTask && (
+        <div
+          onClick={() => setLightboxTask(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 480, width: '100%', background: 'var(--surface)',
+              borderRadius: 16, overflow: 'hidden',
+              border: '1px solid var(--border2)',
+            }}
+          >
+            <img
+              src={lightboxTask.completionPhotoUrl}
+              alt={lightboxTask.title}
+              style={{ width: '100%', maxHeight: '60vh', objectFit: 'cover', display: 'block' }}
+            />
+            <div style={{ padding: '16px 20px' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--white)', marginBottom: 4 }}>
+                {CATEGORY_ICONS[lightboxTask.category] || '📌'} {lightboxTask.title}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 16 }}>
+                {lightboxTask.taskDate} &nbsp;·&nbsp; {(lightboxTask.endTime || lightboxTask.startTime || lightboxTask.taskTime)?.slice(0, 5)}
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <Btn
+                  full
+                  onClick={() => {
+                    const a = document.createElement('a')
+                    a.href = lightboxTask.completionPhotoUrl
+                    a.download = `focusflow-${lightboxTask.title.replace(/[^a-zA-Z0-9]/g, '_')}-${lightboxTask.taskDate}.jpg`
+                    a.click()
+                  }}
+                >
+                  ⬇ Download
+                </Btn>
+                <Btn variant="ghost" full onClick={() => setLightboxTask(null)}>Close</Btn>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Camera Modal */}
       <Modal open={showCameraModal} onClose={closeCameraModal} title={photoPreview ? '📸 Photo Preview' : '📷 Capture Photo'}>
         {!photoPreview ? (
@@ -692,6 +756,7 @@ export default function TasksPage() {
                     borderRadius: 12,
                     marginBottom: 16,
                     background: 'var(--surface)',
+                    transform: 'scaleX(-1)',
                   }}
                   autoPlay
                   playsInline

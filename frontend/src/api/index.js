@@ -39,6 +39,7 @@ export const tasksApi = {
   toggleDone: (id) => api.patch(`/tasks/${id}/toggle`),
   updateEndTime: (id, data) => api.patch(`/tasks/${id}/end-time`, data),
   markStartReminderShown: (id) => api.patch(`/tasks/${id}/start-reminder`),
+  uploadPhoto: (id, photoData) => api.patch(`/tasks/${id}/photo`, { photoData }),
   delete: (id) => api.delete(`/tasks/${id}`),
 }
 
@@ -52,12 +53,16 @@ export const aiApi = {
 // ── Reports ───────────────────────────────────────────────────────────────
 export const reportsApi = {
   getCurrent: () => api.get('/reports/current'),
+  getByWeek: (weekStart) => api.get(`/reports/week?start=${weekStart}`),
   getHistory: () => api.get('/reports'),
 }
 
 // ── User ──────────────────────────────────────────────────────────────────
 export const userApi = {
   me: () => api.get('/users/me'),
+  updateProfile: (data) => api.patch('/users/me/profile', data),
+  changePassword: (data) => api.patch('/users/me/password', data),
+  getGallery: () => api.get('/users/me/gallery'),
   upgradePlan: (plan) => api.patch('/users/me/plan', { plan }),
 }
 

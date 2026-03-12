@@ -57,7 +57,7 @@ export default function ReportPage() {
       />
 
       {/* Week Navigation */}
-      <div style={{
+      <div className="week-nav" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
         marginBottom: 24, padding: '12px 0',
       }}>
@@ -69,7 +69,7 @@ export default function ReportPage() {
           ‹
         </button>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--white)' }}>
+          <div className="week-nav-label" style={{ fontSize: 15, fontWeight: 700, color: 'var(--white)' }}>
             {format(weekStartDate, 'MMM d')} — {format(weekEndDate, 'MMM d, yyyy')}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>
@@ -90,7 +90,7 @@ export default function ReportPage() {
       ) : report ? (
         <>
           {/* Summary cards */}
-          <div style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
+          <div className="stats-row" style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
             <StatCard label="Tasks Done"    value={report.completedTasks} icon="✅" color="var(--green)" />
             <StatCard label="Completion"    value={`${pct}%`}             icon="📈" color="var(--accent)" />
             <StatCard label="Day Streak"    value={`${report.streakDays ?? 0} 🔥`} icon="" color="var(--gold)" />

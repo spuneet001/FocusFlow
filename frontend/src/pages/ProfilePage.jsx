@@ -75,7 +75,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Card */}
-      <Card style={{ display: 'flex', gap: 24, alignItems: 'center', marginBottom: 24 }}>
+      <Card style={{ display: 'flex', gap: 24, alignItems: 'center', marginBottom: 24 }} className="profile-card">
         <div
           onClick={() => fileRef.current?.click()}
           style={{

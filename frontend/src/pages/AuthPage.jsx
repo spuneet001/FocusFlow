@@ -33,7 +33,14 @@ export default function AuthPage() {
         setForm({ name: '', email: form.email, password: '', confirmPassword: '' })
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Something went wrong')
+      const msg = err.response?.data?.message
+      if (msg) {
+        toast.error(msg)
+      } else if (err.request && !err.response) {
+        toast.error('Cannot reach server. Please check your connection.')
+      } else {
+        toast.error('Something went wrong. Please try again.')
+      }
     }
   }
 

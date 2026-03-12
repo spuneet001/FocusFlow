@@ -9,16 +9,26 @@ export const useAuthStore = create((set) => ({
 
   login: async (email, password) => {
     set({ loading: true })
-    const { data } = await authApi.login({ email, password })
-    localStorage.setItem('ff_token', data.token)
-    set({ token: data.token, user: data.user, loading: false })
+    try {
+      const { data } = await authApi.login({ email, password })
+      localStorage.setItem('ff_token', data.token)
+      set({ token: data.token, user: data.user, loading: false })
+    } catch (err) {
+      set({ loading: false })
+      throw err
+    }
   },
 
   register: async (name, email, password) => {
     set({ loading: true })
-    const { data } = await authApi.register({ name, email, password })
-    localStorage.setItem('ff_token', data.token)
-    set({ token: data.token, user: data.user, loading: false })
+    try {
+      const { data } = await authApi.register({ name, email, password })
+      localStorage.setItem('ff_token', data.token)
+      set({ token: data.token, user: data.user, loading: false })
+    } catch (err) {
+      set({ loading: false })
+      throw err
+    }
   },
 
   fetchMe: async () => {

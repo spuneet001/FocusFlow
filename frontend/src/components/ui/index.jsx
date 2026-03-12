@@ -26,9 +26,9 @@ export function Btn({ children, variant = 'primary', size = 'md', full, loading,
 }
 
 // ── Card ──────────────────────────────────────────────────────────────────
-export function Card({ children, style, glow, onClick }) {
+export function Card({ children, style, glow, onClick, className }) {
   return (
-    <div onClick={onClick} style={{
+    <div onClick={onClick} className={className} style={{
       background: 'var(--card)', border: `1px solid ${glow ? 'var(--accent)' : 'var(--border)'}`,
       borderRadius: 'var(--radius-lg)', padding: '20px 22px',
       boxShadow: glow ? '0 0 20px var(--accent-s2)' : 'none',
@@ -116,7 +116,7 @@ export function Divider({ style }) {
 // ── Page Header ───────────────────────────────────────────────────────────
 export function PageHeader({ title, sub, action }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+    <div className="page-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
       <div>
         <h1 style={{ fontSize: 26, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--white)', letterSpacing: '-0.5px' }}>
           {title}

@@ -109,6 +109,115 @@ select option { background: var(--card); }
   overflow-y: auto;
   padding: 36px 40px;
 }
+
+/* ── Desktop Sidebar ─────────────────────────────────────── */
+.sidebar-desktop {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0;
+}
+
+/* ── Mobile Tab Bar (hidden on desktop) ──────────────────── */
+.mobile-tab-bar {
+  display: none;
+}
+
+/* ── Responsive: Mobile ──────────────────────────────────── */
 @media (max-width: 768px) {
-  .main-content { padding: 20px 16px; }
+  /* Hide sidebar, show bottom tabs */
+  .sidebar-desktop {
+    display: none;
+  }
+  .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 6px 0;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+    align-items: center;
+  }
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 8px;
+    transition: color 0.15s;
+  }
+  .mobile-tab.active {
+    color: var(--accent);
+  }
+  .mobile-tab-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+  .mobile-tab-label {
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  /* Main content adjustments */
+  .main-content {
+    padding: 20px 16px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Stat cards: 2-column grid */
+  .stats-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Page header responsive */
+  .page-header-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+  .page-header-row h1 {
+    font-size: 22px !important;
+  }
+
+  /* Date picker on mobile */
+  .date-picker {
+    width: 140px !important;
+    font-size: 13px !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Profile card stacks vertically on mobile */
+  .profile-card {
+    flex-direction: column !important;
+    text-align: center !important;
+  }
+
+  /* Agent page: account for bottom tab bar */
+  .agent-page {
+    height: calc(100vh - 140px) !important;
+  }
+
+  /* Week navigation responsive */
+  .week-nav {
+    gap: 8px !important;
+  }
+  .week-nav-label {
+    font-size: 13px !important;
+  }
 }

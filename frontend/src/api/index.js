@@ -2,9 +2,15 @@ import axios from 'axios'
 import { Capacitor } from '@capacitor/core'
 
 // On native mobile, use the full backend URL; on web, use the Vite proxy
-const baseURL = Capacitor.isNativePlatform()
-  ? (import.meta.env.VITE_API_URL || 'http://10.0.2.2:8080/api')
-  : '/api'
+function getBaseURL() {
+  if (!Capacitor.isNativePlatform()) return '/api'
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
+  const platform = Capacitor.getPlatform()
+  // iOS simulator shares localhost with Mac; Android emulator uses 10.0.2.2
+  const host = platform === 'android' ? '10.0.2.2' : 'localhost'
+  return `http://${host}:8080/api`
+}
+const baseURL = getBaseURL()
 
 const api = axios.create({
   baseURL,

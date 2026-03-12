@@ -328,7 +328,7 @@ export default function TasksPage() {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+      <div className="page-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'var(--white)', marginBottom: 4 }}>
             Today's Focus
@@ -342,6 +342,7 @@ export default function TasksPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => { setSelectedDate(e.target.value); setForm(p => ({ ...p, taskDate: e.target.value })) }}
+            className="date-picker"
             style={{
               padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border2)',
               background: 'var(--surface)', color: 'var(--white)', fontSize: 14, cursor: 'pointer',
@@ -360,7 +361,7 @@ export default function TasksPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', gap: 14, marginBottom: 28 }}>
+      <div className="stats-row" style={{ display: 'flex', gap: 14, marginBottom: 28 }}>
         <StatCard label="Remaining" value={remaining.length} icon="📋" />
         <StatCard label="Completed" value={completed.length} icon="✅" color="var(--green)" />
       </div>

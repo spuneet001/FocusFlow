@@ -17,6 +17,7 @@
 /Users/puneetsharma/Documents/GitHub/FocusFlow/backend/src/main/java/com/focusflow/dto/Dto.java
 /Users/puneetsharma/Documents/GitHub/FocusFlow/backend/src/main/java/com/focusflow/security/JwtAuthFilter.java
 /Users/puneetsharma/Documents/GitHub/FocusFlow/backend/src/main/java/com/focusflow/controller/ReportController.java
+/Users/puneetsharma/Documents/GitHub/FocusFlow/backend/src/main/java/com/focusflow/controller/GlobalExceptionHandler.java
 /Users/puneetsharma/Documents/GitHub/FocusFlow/backend/src/main/java/com/focusflow/entity/User.java
 /Users/puneetsharma/Documents/GitHub/FocusFlow/backend/src/main/java/com/focusflow/repository/TaskRepository.java
 /Users/puneetsharma/Documents/GitHub/FocusFlow/backend/src/main/java/com/focusflow/entity/AiPlan.java

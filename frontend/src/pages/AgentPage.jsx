@@ -85,7 +85,7 @@ export default function AgentPage() {
   }
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 72px)' }}>
+    <div className="fade-in agent-page" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 72px)' }}>
       <PageHeader
         title="AI Agent"
         sub="Tell me your goal — I'll build your action plan"

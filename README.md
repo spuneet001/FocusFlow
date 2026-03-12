@@ -103,12 +103,7 @@ ANTHROPIC_API_KEY=sk-ant-... docker-compose up
 # Frontend: http://localhost:3000
 # Backend:  http://localhost:8080
 ```
-docker run --name focusflow-db \
-  -e POSTGRES_DB=focusflow \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=your_password \
-  -p 5432:5432 \
-  -d postgres:15-alpine
+
 ### 3b. Without Docker
 
 **Backend:**

@@ -1,7 +1,13 @@
 import axios from 'axios'
+import { Capacitor } from '@capacitor/core'
+
+// On native mobile, use the full backend URL; on web, use the Vite proxy
+const baseURL = Capacitor.isNativePlatform()
+  ? (import.meta.env.VITE_API_URL || 'http://10.0.2.2:8080/api')
+  : '/api'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
 })
 

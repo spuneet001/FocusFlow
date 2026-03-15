@@ -1,4 +1,5 @@
 import React from 'react'
+import { Inbox, X as XIcon } from 'lucide-react'
 
 // ── Button ────────────────────────────────────────────────────────────────
 export function Btn({ children, variant = 'primary', size = 'md', full, loading, ...props }) {
@@ -48,21 +49,21 @@ export function Modal({ open, onClose, children, title, width = 480 }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 1000, backdropFilter: 'blur(6px)', padding: 16, minHeight: '100vh',
     }}>
-      <div onClick={(e) => e.stopPropagation()} className="fade-in" style={{
+      <div onClick={(e) => e.stopPropagation()} className="fade-in modal-content" style={{
         background: 'var(--card)', border: '1px solid var(--border2)',
         borderRadius: 20, padding: 28, width: '100%', maxWidth: 480,
         maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow)',
         margin: 'auto',
       }}>
         {title && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--white)' }}>
               {title}
             </div>
             <button onClick={onClose} style={{
               background: 'transparent', border: 'none', color: 'var(--text2)', fontSize: 18,
               cursor: 'pointer', padding: '2px 6px', lineHeight: 1, borderRadius: 6,
-            }}>✕</button>
+            }}><XIcon size={16} /></button>
           </div>
         )}
         {children}
@@ -102,7 +103,7 @@ export function Spinner({ size = 20, color = 'var(--accent)' }) {
 // ── Label ─────────────────────────────────────────────────────────────────
 export function Label({ children }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+    <div className="form-label" style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
       {children}
     </div>
   )
@@ -140,7 +141,7 @@ export function StatCard({ label, value, color = 'var(--accent)', icon }) {
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────
-export function Empty({ icon = '📭', message, action }) {
+export function Empty({ icon = <Inbox size={40} />, message, action }) {
   return (
     <Card style={{ textAlign: 'center', padding: 48 }}>
       <div style={{ fontSize: 40, marginBottom: 12 }}>{icon}</div>

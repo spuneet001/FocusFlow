@@ -1,12 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store'
 import { useState } from 'react'
+import { CheckSquare, Bot, BarChart3, User, LogOut } from 'lucide-react'
 
 const NAV = [
-  { to: '/tasks',        icon: '☑️',  label: 'Tasks' },
-  { to: '/agent',        icon: '🤖',  label: 'AI Agent',       pro: true },
-  { to: '/report',       icon: '📊',  label: 'Report' },
-  { to: '/profile',      icon: '👤',  label: 'Profile' },
+  { to: '/tasks',        Icon: CheckSquare,  label: 'Tasks' },
+  { to: '/agent',        Icon: Bot,           label: 'AI Agent',       pro: true },
+  { to: '/report',       Icon: BarChart3,     label: 'Report' },
+  { to: '/profile',      Icon: User,          label: 'Profile' },
 ]
 
 export default function Sidebar() {
@@ -41,7 +42,7 @@ export default function Sidebar() {
               borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
               textDecoration: 'none', fontSize: 14, transition: 'all 0.15s',
             })}>
-              <span>{n.icon}</span>
+              <n.Icon size={18} />
               <span style={{ flex: 1 }}>{n.label}</span>
               {n.pro && isPro && (
                 <span style={{ background: 'var(--accent)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 20 }}>PRO</span>
@@ -88,7 +89,7 @@ export default function Sidebar() {
       <nav className="mobile-tab-bar">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
-            <span className="mobile-tab-icon">{n.icon}</span>
+            <span className="mobile-tab-icon"><n.Icon size={20} /></span>
             <span className="mobile-tab-label">{n.label}</span>
           </NavLink>
         ))}

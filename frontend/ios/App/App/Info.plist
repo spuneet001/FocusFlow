@@ -52,5 +52,11 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>FocusFlow needs camera access to capture task completion photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FocusFlow needs photo library access to select task completion photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>FocusFlow needs to save task completion photos to your library.</string>
 </dict>
 </plist>

@@ -26,8 +26,8 @@
   --text2:     #9898b8;
   --white:     #ffffff;
 
-  --font-display: 'Syne', sans-serif;
-  --font-body:    'Instrument Sans', sans-serif;
+  --font-display: 'Syne', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  --font-body:    'Instrument Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 
   --radius:  10px;
   --radius-lg: 16px;
@@ -49,6 +49,7 @@ html, body, #root {
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Scrollbar */
@@ -102,7 +103,9 @@ select option { background: var(--card); }
 .app-shell {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .main-content {
   flex: 1;
@@ -174,8 +177,12 @@ select option { background: var(--card); }
   /* Main content adjustments */
   .main-content {
     padding: 20px 16px;
-    padding-top: calc(16px + env(safe-area-inset-top, 0px));
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Prevent iOS auto-zoom on input focus */
+  input, textarea, select {
+    font-size: 16px !important;
   }
 
   /* Stat cards: 2-column grid */
@@ -219,5 +226,42 @@ select option { background: var(--card); }
   }
   .week-nav-label {
     font-size: 13px !important;
+  }
+
+  /* Form rows stack on mobile */
+  .form-row {
+    flex-direction: column !important;
+  }
+
+  /* Compact modal on mobile */
+  .modal-content {
+    padding: 18px !important;
+    border-radius: 14px !important;
+    max-height: 92vh !important;
+  }
+  .modal-header {
+    margin-bottom: 12px !important;
+  }
+  .modal-header div:first-child {
+    font-size: 15px !important;
+  }
+
+  /* Compact task modal on mobile */
+  .task-modal-form input,
+  .task-modal-form select,
+  .task-modal-form textarea {
+    padding: 7px 10px !important;
+    font-size: 14px !important;
+  }
+  .task-modal-form .form-field {
+    margin-bottom: 8px !important;
+  }
+  .task-modal-form .form-row-inline {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+  .task-modal-form .form-label {
+    font-size: 10px !important;
+    margin-bottom: 3px !important;
   }
 }

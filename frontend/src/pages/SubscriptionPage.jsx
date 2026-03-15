@@ -3,19 +3,20 @@ import { useAuthStore } from '../store'
 import { userApi } from '../api'
 import { Btn, Card, PageHeader, Divider } from '../components/ui'
 import toast from 'react-hot-toast'
+import { Check, X, CreditCard } from 'lucide-react'
 
 const PLANS = [
   {
     key: 'FREE', name: 'Free', price: '$0', period: '',
     color: 'var(--text2)',
     features: [
-      '✓ Up to 10 tasks/day',
-      '✓ Custom alarm tunes',
-      '✓ Task priorities & categories',
-      '✓ Basic completion stats',
-      '✗ AI plan generation',
-      '✗ AI chat refinement',
-      '✗ AI weekly reports',
+      { ok: true,  text: 'Up to 10 tasks/day' },
+      { ok: true,  text: 'Custom alarm tunes' },
+      { ok: true,  text: 'Task priorities & categories' },
+      { ok: true,  text: 'Basic completion stats' },
+      { ok: false, text: 'AI plan generation' },
+      { ok: false, text: 'AI chat refinement' },
+      { ok: false, text: 'AI weekly reports' },
     ],
   },
   {
@@ -23,26 +24,26 @@ const PLANS = [
     color: 'var(--accent)',
     highlight: true,
     features: [
-      '✓ Unlimited tasks',
-      '✓ All Free features',
-      '✓ AI plan generation',
-      '✓ AI chat & refinement',
-      '✓ AI weekly insights',
-      '✓ Auto-add tasks from AI',
-      '✗ Priority AI responses',
+      { ok: true,  text: 'Unlimited tasks' },
+      { ok: true,  text: 'All Free features' },
+      { ok: true,  text: 'AI plan generation' },
+      { ok: true,  text: 'AI chat & refinement' },
+      { ok: true,  text: 'AI weekly insights' },
+      { ok: true,  text: 'Auto-add tasks from AI' },
+      { ok: false, text: 'Priority AI responses' },
     ],
   },
   {
     key: 'PREMIUM', name: 'Premium', price: '$19', period: '/mo',
     color: 'var(--gold)',
     features: [
-      '✓ Everything in Pro',
-      '✓ Priority AI responses',
-      '✓ Export reports as PDF',
-      '✓ Custom notification tunes',
-      '✓ Social media integrations',
-      '✓ Team / family sharing',
-      '✓ Dedicated support',
+      { ok: true,  text: 'Everything in Pro' },
+      { ok: true,  text: 'Priority AI responses' },
+      { ok: true,  text: 'Export reports as PDF' },
+      { ok: true,  text: 'Custom notification tunes' },
+      { ok: true,  text: 'Social media integrations' },
+      { ok: true,  text: 'Team / family sharing' },
+      { ok: true,  text: 'Dedicated support' },
     ],
   },
 ]
@@ -101,9 +102,9 @@ export default function SubscriptionPage() {
 
               <Divider style={{ margin: '0 0 16px' }} />
 
-              {plan.features.map((f) => (
-                <div key={f} style={{ fontSize: 13, color: f.startsWith('✗') ? 'var(--text2)' : 'var(--text)', marginBottom: 8, lineHeight: 1.5 }}>
-                  {f}
+              {plan.features.map((f, i) => (
+                <div key={i} style={{ fontSize: 13, color: f.ok ? 'var(--text)' : 'var(--text2)', marginBottom: 8, lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {f.ok ? <Check size={14} color="var(--green)" /> : <X size={14} color="var(--text2)" />} {f.text}
                 </div>
               ))}
 
@@ -116,7 +117,7 @@ export default function SubscriptionPage() {
                   disabled={isCurrent}
                   style={{ background: isCurrent ? undefined : plan.color === 'var(--accent)' ? undefined : plan.color }}
                 >
-                  {isCurrent ? '✓ Current Plan' : `Get ${plan.name}`}
+                  {isCurrent ? 'Current Plan' : `Get ${plan.name}`}
                 </Btn>
               </div>
             </div>
@@ -132,9 +133,9 @@ export default function SubscriptionPage() {
           &nbsp;· Member since: {user?.createdAt?.slice(0, 10)}
         </div>
         <Divider />
-        <div style={{ fontSize: 12, color: 'var(--text2)' }}>
-          💳 Payments are processed securely via Stripe. Cancel anytime from your billing portal.
-          API keys and payment tokens are never stored on our servers.
+        <div style={{ fontSize: 12, color: 'var(--text2)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+          <CreditCard size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span>Payments are processed securely via Stripe. Cancel anytime from your billing portal.
+          API keys and payment tokens are never stored on our servers.</span>
         </div>
       </Card>
     </div>

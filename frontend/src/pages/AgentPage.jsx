@@ -3,14 +3,15 @@ import { useAuthStore, useTaskStore } from '../store'
 import { aiApi } from '../api'
 import { Btn, Card, Badge, Label, Divider, PageHeader, Spinner, Empty } from '../components/ui'
 import toast from 'react-hot-toast'
+import { Activity, BookOpen, Heart, Wallet, Moon, Apple, Sparkles, Bot, Lightbulb, ArrowRight, ArrowLeft } from 'lucide-react'
 
 const GOAL_SUGGESTIONS = [
-  { icon: '🏃', label: 'Lose weight & get fit' },
-  { icon: '📚', label: 'Learn a new skill' },
-  { icon: '🧘', label: 'Reduce stress & meditate' },
-  { icon: '💰', label: 'Save money & budget' },
-  { icon: '😴', label: 'Improve sleep habits' },
-  { icon: '🍎', label: 'Eat healthier' },
+  { Icon: Activity,  label: 'Lose weight & get fit' },
+  { Icon: BookOpen,  label: 'Learn a new skill' },
+  { Icon: Heart,     label: 'Reduce stress & meditate' },
+  { Icon: Wallet,    label: 'Save money & budget' },
+  { Icon: Moon,      label: 'Improve sleep habits' },
+  { Icon: Apple,     label: 'Eat healthier' },
 ]
 
 export default function AgentPage() {
@@ -35,7 +36,7 @@ export default function AgentPage() {
     try {
       const { data } = await aiApi.generatePlan(goal)
       setPlanId(data.id)
-      setChat([{ role: 'assistant', content: `✨ Here's your personalised plan for: **${goal}**\n\n${data.generatedPlan}\n\n---\nAsk me to adjust anything — timing, intensity, diet preferences, and I'll refine it. I can also add specific tasks directly to your todo list!` }])
+      setChat([{ role: 'assistant', content: `Here's your personalised plan for: **${goal}**\n\n${data.generatedPlan}\n\n---\nAsk me to adjust anything — timing, intensity, diet preferences, and I'll refine it. I can also add specific tasks directly to your todo list!` }])
       setStep('chat')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to generate plan')
@@ -71,14 +72,14 @@ export default function AgentPage() {
       <div className="fade-in">
         <PageHeader title="AI Agent" sub="Your personal AI life coach" />
         <Card style={{ textAlign: 'center', padding: '56px 32px' }}>
-          <div style={{ fontSize: 52, marginBottom: 16 }}>🤖</div>
+          <div style={{ fontSize: 52, marginBottom: 16 }}><Bot size={52} color="var(--accent)" /></div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--white)', marginBottom: 10 }}>
             Unlock AI Agent
           </h2>
           <p style={{ color: 'var(--text2)', maxWidth: 380, margin: '0 auto 28px', lineHeight: 1.8 }}>
             Generate personalised action plans, refine them with AI chat, and automatically populate your todo list.
           </p>
-          <Btn onClick={() => window.location.href = '/subscription'}>View Plans →</Btn>
+          <Btn onClick={() => window.location.href = '/subscription'}>View Plans <ArrowRight size={14} /></Btn>
         </Card>
       </div>
     )
@@ -91,7 +92,7 @@ export default function AgentPage() {
         sub="Tell me your goal — I'll build your action plan"
         action={step === 'chat' && (
           <Btn variant="ghost" onClick={() => { setStep('prompt'); setGoal(''); setChat([]); setPlanId(null) }}>
-            ← New Goal
+            <ArrowLeft size={14} /> New Goal
           </Btn>
         )}
       />
@@ -114,13 +115,13 @@ export default function AgentPage() {
                 padding: '8px 14px', color: 'var(--text)', fontSize: 13, cursor: 'pointer',
                 display: 'flex', gap: 6, alignItems: 'center', transition: 'border-color 0.15s',
               }}>
-                {s.icon} {s.label}
+                <s.Icon size={14} /> {s.label}
               </button>
             ))}
           </div>
 
           <Btn onClick={generatePlan} loading={genLoading} size="lg">
-            ✨ Generate My Plan
+            <Sparkles size={16} /> Generate My Plan
           </Btn>
         </Card>
       )}
@@ -166,8 +167,8 @@ export default function AgentPage() {
             />
             <Btn onClick={sendMessage} loading={chatLoading}>Send</Btn>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 8 }}>
-            💡 Say "add [task] to my todo" and I'll automatically create it in your task list
+          <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Lightbulb size={12} /> Say "add [task] to my todo" and I'll automatically create it in your task list
           </div>
         </div>
       )}

@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store'
 import { userApi } from '../api'
 import { Btn, Card, Modal, Label, Badge, Divider, Spinner } from '../components/ui'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
+import { Camera, Download, ArrowRight } from 'lucide-react'
 
 export default function ProfilePage() {
-  const { user, setUser } = useAuthStore()
+  const { user, setUser, logout } = useAuthStore()
+  const navigate = useNavigate()
   const [gallery, setGallery] = useState([])
   const [loadingGallery, setLoadingGallery] = useState(false)
   const [name, setName] = useState(user?.name || '')
@@ -137,20 +140,20 @@ export default function ProfilePage() {
         </div>
         {user?.plan === 'FREE' && (
           <Btn variant="ghost" onClick={() => window.location.href = '/subscription'} style={{ marginTop: 8 }}>
-            Upgrade Plan →
+            Upgrade Plan <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
           </Btn>
         )}
         {user?.plan !== 'FREE' && (
           <Btn variant="ghost" onClick={() => window.location.href = '/subscription'} style={{ marginTop: 8 }}>
-            Manage Plan →
+            Manage Plan <ArrowRight size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />
           </Btn>
         )}
       </Card>
 
       {/* Photo Gallery */}
       <Card>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--white)', marginBottom: 16 }}>
-          📸 My Gallery
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--white)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Camera size={16} /> My Gallery
         </div>
         {loadingGallery ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><Spinner size={28} /></div>
@@ -187,6 +190,11 @@ export default function ProfilePage() {
           </div>
         )}
       </Card>
+
+      {/* Sign Out */}
+      <Btn variant="danger" full onClick={() => { logout(); navigate('/login') }} style={{ marginTop: 24 }}>
+        Sign Out
+      </Btn>
 
       {/* Gallery Lightbox */}
       {lightboxPhoto && (
@@ -229,7 +237,7 @@ export default function ProfilePage() {
                     a.click()
                   }}
                 >
-                  ⬇ Download
+                  <Download size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Download
                 </Btn>
                 <Btn variant="ghost" full onClick={() => setLightboxPhoto(null)}>Close</Btn>
               </div>

@@ -5,12 +5,17 @@ import { Btn, Card, Modal, Badge, Label, Divider, PageHeader, StatCard, Empty, S
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { playSound } from '../utils/soundUtils'
+import { scheduleTaskNotifications, cancelTaskNotifications, scheduleAllTaskNotifications, requestNotificationPermission } from '../utils/notificationUtils'
+import { takePhoto, pickFromGallery } from '../utils/cameraUtils'
+import { Capacitor } from '@capacitor/core'
+import { Bell, Music, Megaphone, Music2, Volume2, Activity, Briefcase, BookOpen, Salad, Heart, Bot, Pencil, ClipboardList, Clock, CheckCircle2, Pin, AlarmClock, Camera, FolderOpen, Download, RefreshCw, Ban, Image as ImageIcon, Sparkles, X as XIcon, Check, ArrowRight } from 'lucide-react'
 
-const TUNES = ['🔔 Bell', '🎵 Chime', '📣 Alert', '🎶 Melody', '🔊 Ping']
+const TUNES = ['Bell', 'Chime', 'Alert', 'Melody', 'Ping']
+const TUNE_ICONS = { Bell: Bell, Chime: Music, Alert: Megaphone, Melody: Music2, Ping: Volume2 }
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH']
 const CATEGORIES = ['MANUAL', 'FITNESS', 'WORK', 'LEARNING', 'NUTRITION', 'WELLNESS', 'AI_PLAN']
 const PRIORITY_COLOR = { LOW: 'green', MEDIUM: 'gold', HIGH: 'red' }
-const CATEGORY_ICONS = { FITNESS: '🏃', WORK: '💼', LEARNING: '📚', NUTRITION: '🥗', WELLNESS: '🧘', AI_PLAN: '🤖', MANUAL: '✏️' }
+const CATEGORY_ICONS = { FITNESS: Activity, WORK: Briefcase, LEARNING: BookOpen, NUTRITION: Salad, WELLNESS: Heart, AI_PLAN: Bot, MANUAL: Pencil }
 
 const EMPTY_FORM = {
   title: '', description: '', taskDate: format(new Date(), 'yyyy-MM-dd'),
@@ -39,6 +44,14 @@ export default function TasksPage() {
   const canvasRef = useRef(null)
 
   useEffect(() => { fetchAll() }, [])
+
+  // Request notification permission and schedule all task notifications on load
+  useEffect(() => {
+    if (tasks.length > 0) {
+      requestNotificationPermission()
+      scheduleAllTaskNotifications(tasks)
+    }
+  }, [tasks])
 
   // Alarm checker - Check both start and end times
   useEffect(() => {
@@ -138,8 +151,9 @@ export default function TasksPage() {
         setEditingTask(null)
       } else {
         console.log('➕ Creating new task')
-        await create(payload)
+        const newTask = await create(payload)
         console.log('✅ Task created successfully')
+        if (newTask) scheduleTaskNotifications(newTask)
         await fetchAll()
         console.log('🔄 Tasks refreshed')
         toast.success('Task added!')
@@ -201,6 +215,7 @@ export default function TasksPage() {
   async function confirmDelete() {
     try {
       await deleteTask(deleteConfirm.id)
+      cancelTaskNotifications(deleteConfirm.id)
       toast.success('Task deleted!')
       setDeleteConfirm(null)
     } catch { toast.error('Delete failed') }
@@ -237,14 +252,26 @@ export default function TasksPage() {
   }
 
   async function startCamera() {
+    if (Capacitor.isNativePlatform()) {
+      // Use native camera
+      try {
+        const dataUrl = await takePhoto()
+        if (dataUrl) setPhotoPreview(dataUrl)
+      } catch (err) {
+        if (err.message !== 'User cancelled photos app') {
+          toast.error('Camera error: ' + (err.message || 'Unknown'))
+        }
+      }
+      return
+    }
+    // Web fallback
     try {
-      console.log('📸 Requesting camera access...')
+      console.log('Requesting camera access...')
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-      console.log('✅ Camera access granted')
+      console.log('Camera access granted')
       setCameraStream(stream)
-      // videoRef may not be mounted yet; the useEffect below will attach it
     } catch (err) {
-      console.error('❌ Camera error:', err)
+      console.error('Camera error:', err)
       if (err.name === 'NotAllowedError') {
         toast.error('Camera access denied. Please enable camera in browser settings.')
       } else if (err.name === 'NotFoundError') {
@@ -275,13 +302,24 @@ export default function TasksPage() {
     }
   }
 
-  function handleGalleryUpload(e) {
-    const file = e.target.files?.[0]
+  async function handleGalleryUpload(e) {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const dataUrl = await pickFromGallery()
+        if (dataUrl) setPhotoPreview(dataUrl)
+      } catch (err) {
+        if (err.message !== 'User cancelled photos app') {
+          toast.error('Gallery error: ' + (err.message || 'Unknown'))
+        }
+      }
+      return
+    }
+    // Web fallback
+    const file = e?.target?.files?.[0]
     if (file) {
       const reader = new FileReader()
       reader.onload = (event) => {
         setPhotoPreview(event.target?.result)
-        console.log('📁 Photo selected from gallery')
       }
       reader.readAsDataURL(file)
     }
@@ -297,7 +335,7 @@ export default function TasksPage() {
       // Now mark as done
       console.log('✅ Marking task as done with photo')
       await handleToggle(alarmTask.id)
-      toast.success('Task marked done with photo! 📸')
+      toast.success('Task marked done with photo!')
       setAlarmTask(null)
       setShowCameraModal(false)
       setPhotoPreview(null)
@@ -362,21 +400,21 @@ export default function TasksPage() {
 
       {/* Stats */}
       <div className="stats-row" style={{ display: 'flex', gap: 14, marginBottom: 28 }}>
-        <StatCard label="Remaining" value={remaining.length} icon="📋" />
-        <StatCard label="Completed" value={completed.length} icon="✅" color="var(--green)" />
+        <StatCard label="Remaining" value={remaining.length} icon={<ClipboardList size={22} />} />
+        <StatCard label="Completed" value={completed.length} icon={<CheckCircle2 size={22} />} color="var(--green)" />
       </div>
 
       {/* Task list - Remaining tasks first */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size={32} /></div>
       ) : selectedTasks.length === 0 ? (
-        <Empty icon="🗒️" message={`No tasks on ${selectedDate}. Add one or use the AI Agent!`} action={<Btn onClick={() => { setEditingTask(null); setShowAdd(true); setForm({ title: '', description: '', taskDate: selectedDate, taskTime: '09:00', startTime: '09:00', endTime: '10:00', alarmTune: TUNES[0], priority: 'MEDIUM', category: 'MANUAL' }) }}>+ Add First Task</Btn>} />
+        <Empty icon={<ClipboardList size={40} />} message={`No tasks on ${selectedDate}. Add one or use the AI Agent!`} action={<Btn onClick={() => { setEditingTask(null); setShowAdd(true); setForm({ title: '', description: '', taskDate: selectedDate, taskTime: '09:00', startTime: '09:00', endTime: '10:00', alarmTune: TUNES[0], priority: 'MEDIUM', category: 'MANUAL' }) }}>+ Add First Task</Btn>} />
       ) : (
         <>
           {remaining.length > 0 && (
             <>
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                📋 Remaining
+                <ClipboardList size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Remaining
               </div>
               {remaining.map((t) => {
                 const now = new Date()
@@ -397,14 +435,14 @@ export default function TasksPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 4 }}>
                       <span style={{ fontWeight: 600, color: 'var(--white)' }}>
-                        {CATEGORY_ICONS[t.category] || '📌'} {t.title}
+                        {(() => { const CatIcon = CATEGORY_ICONS[t.category] || Pin; return <CatIcon size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> })()} {t.title}
                       </span>
                       <Badge color={PRIORITY_COLOR[t.priority]}>{t.priority}</Badge>
                       {t.aiGenerated && <Badge color="purple">AI</Badge>}
                     </div>
                     {t.description && <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 6 }}>{t.description}</div>}
                     <div style={{ fontSize: 11, color: 'var(--text2)' }}>
-                      ⏰ {(t.startTime || t.taskTime)?.slice(0, 5)} → {(t.endTime || t.startTime || t.taskTime)?.slice(0, 5)} &nbsp; 🔔 {t.alarmTune}
+                      <AlarmClock size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> {(t.startTime || t.taskTime)?.slice(0, 5)} <ArrowRight size={10} style={{ display: 'inline', verticalAlign: 'middle' }} /> {(t.endTime || t.startTime || t.taskTime)?.slice(0, 5)} &nbsp; <Bell size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> {t.alarmTune}
                     </div>
                   </div>
 
@@ -413,7 +451,7 @@ export default function TasksPage() {
                     cursor: isPastTask ? 'not-allowed' : 'pointer', fontSize: 16, padding: '4px 6px', flexShrink: 0,
                     opacity: isPastTask ? 0.5 : 1,
                     title: isPastTask ? 'Cannot delete past tasks (affects weekly report)' : '',
-                  }}>✕</button>
+                  }}><XIcon size={16} /></button>
                 </Card>
                 )
               })}
@@ -423,7 +461,7 @@ export default function TasksPage() {
           {completed.length > 0 && (
             <>
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 12, marginTop: 24, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                ✅ Completed
+                <CheckCircle2 size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Completed
               </div>
               {completed.map((t) => (
                 <Card key={t.id} style={{ display: 'flex', gap: 14, marginBottom: 12, opacity: 0.55, transition: 'opacity 0.2s' }}>
@@ -435,20 +473,20 @@ export default function TasksPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 11, color: '#fff', transition: 'all 0.15s',
                   }}>
-                    ✓
+                    <Check size={14} />
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 4 }}>
                       <span style={{ fontWeight: 600, textDecoration: 'line-through', color: 'var(--text2)' }}>
-                        {CATEGORY_ICONS[t.category] || '📌'} {t.title}
+                        {(() => { const CatIcon = CATEGORY_ICONS[t.category] || Pin; return <CatIcon size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> })()} {t.title}
                       </span>
                       <Badge color={PRIORITY_COLOR[t.priority]}>{t.priority}</Badge>
                       {t.aiGenerated && <Badge color="purple">AI</Badge>}
                     </div>
                     {t.description && <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 6 }}>{t.description}</div>}
                     <div style={{ fontSize: 11, color: 'var(--text2)' }}>
-                      ⏰ {(t.startTime || t.taskTime)?.slice(0, 5)} → {(t.endTime || t.startTime || t.taskTime)?.slice(0, 5)} &nbsp; 🔔 {t.alarmTune}
+                      <AlarmClock size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> {(t.startTime || t.taskTime)?.slice(0, 5)} <ArrowRight size={10} style={{ display: 'inline', verticalAlign: 'middle' }} /> {(t.endTime || t.startTime || t.taskTime)?.slice(0, 5)} &nbsp; <Bell size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> {t.alarmTune}
                     </div>
                   </div>
 
@@ -468,7 +506,7 @@ export default function TasksPage() {
                       background: 'transparent', border: 'none', color: 'var(--text2)', opacity: 0.5,
                       cursor: 'not-allowed', fontSize: 16, padding: '4px 6px', flexShrink: 0,
                       title: 'Cannot delete completed tasks (affects weekly report)',
-                    }}>✕</button>
+                    }}><XIcon size={16} /></button>
                   </div>
                 </Card>
               ))}
@@ -528,21 +566,19 @@ export default function TasksPage() {
       </Modal>
 
       {/* Add Task Modal */}
-      <Modal open={showAdd} onClose={() => { setShowAdd(false); setEditingTask(null); setForm({ title: '', description: '', taskDate: selectedDate, taskTime: '09:00', startTime: '09:00', endTime: '10:00', alarmTune: TUNES[0], priority: 'MEDIUM', category: 'MANUAL' }) }} title={editingTask ? '✏️ Edit Task' : '➕ Add Task'}>
-        <form onSubmit={handleAdd}>
+      <Modal open={showAdd} onClose={() => { setShowAdd(false); setEditingTask(null); setForm({ title: '', description: '', taskDate: selectedDate, taskTime: '09:00', startTime: '09:00', endTime: '10:00', alarmTune: TUNES[0], priority: 'MEDIUM', category: 'MANUAL' }) }} title={editingTask ? 'Edit Task' : 'Add Task'}>
+        <form onSubmit={handleAdd} className="task-modal-form">
           {[{ label: 'Title', key: 'title', placeholder: 'e.g. Morning run', required: true }, { label: 'Description', key: 'description', placeholder: 'Optional details' }].map(({ label, key, placeholder, required }) => (
-            <div key={key} style={{ marginBottom: 14 }}>
+            <div key={key} className="form-field" style={{ marginBottom: 14 }}>
               <Label>{label}</Label>
               <input placeholder={placeholder} value={form[key]} onChange={(e) => f(key, e.target.value)} required={required} />
             </div>
           ))}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-            <div style={{ flex: 1 }}>
-              <Label>Date</Label>
-              <input type="date" value={form.taskDate} onChange={(e) => f('taskDate', e.target.value)} />
-            </div>
+          <div className="form-field" style={{ marginBottom: 14 }}>
+            <Label>Date</Label>
+            <input type="date" value={form.taskDate} onChange={(e) => f('taskDate', e.target.value)} />
           </div>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+          <div className="form-row-inline" style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1 }}>
               <Label>Start Time</Label>
               <input type="time" value={form.startTime} onChange={(e) => f('startTime', e.target.value)} />
@@ -552,7 +588,7 @@ export default function TasksPage() {
               <input type="time" value={form.endTime} onChange={(e) => f('endTime', e.target.value)} />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+          <div className="form-row-inline" style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1 }}>
               <Label>Priority</Label>
               <select value={form.priority} onChange={(e) => f('priority', e.target.value)}>
@@ -566,7 +602,7 @@ export default function TasksPage() {
               </select>
             </div>
           </div>
-          <div style={{ marginBottom: 22 }}>
+          <div className="form-field" style={{ marginBottom: 18 }}>
             <Label>Alarm Tune</Label>
             <select value={form.alarmTune} onChange={(e) => f('alarmTune', e.target.value)}>
               {TUNES.map((t) => <option key={t}>{t}</option>)}
@@ -583,20 +619,20 @@ export default function TasksPage() {
       <Modal open={!!alarmTask} onClose={() => setAlarmTask(null)}>
         {alarmTask && (
           <div style={{ textAlign: 'center' }}>
-            <div className="alarm-pulse" style={{ fontSize: 52, marginBottom: 12, display: 'inline-block' }}>⏰</div>
+            <div className="alarm-pulse" style={{ fontSize: 52, marginBottom: 12, display: 'inline-block' }}><AlarmClock size={52} color="var(--accent)" /></div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--accent)', marginBottom: 6, animation: 'alarmPulse 0.6s ease infinite' }}>
               Time's Up!
             </div>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 4 }}>{alarmTask.title}</div>
             {alarmTask.description && <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>{alarmTask.description}</div>}
-            <Badge color="purple">{alarmTask.alarmTune} 🔊</Badge>
+            <Badge color="purple">{alarmTask.alarmTune} <Volume2 size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /></Badge>
             <Divider style={{ margin: '20px 0' }} />
             <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 18 }}>
-              📸 Take a photo after completing this task and share on social media — <strong>optional</strong>
+              <Camera size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Take a photo after completing this task and share on social media — <strong>optional</strong>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
-              <Btn onClick={() => { handleToggle(alarmTask.id); setAlarmTask(null) }}>✓ Mark Done</Btn>
-              <Btn variant="success" onClick={handleCaptureAndShare}>📸 Share & Done</Btn>
+              <Btn onClick={() => { handleToggle(alarmTask.id); setAlarmTask(null) }}><Check size={14} /> Mark Done</Btn>
+              <Btn variant="success" onClick={handleCaptureAndShare}><Camera size={14} /> Share & Done</Btn>
             </div>
             <Btn variant="ghost" full onClick={() => setAlarmTask(null)}>Not Finished(Close)</Btn>
           </div>
@@ -607,19 +643,19 @@ export default function TasksPage() {
       <Modal open={!!startTimeReminder} onClose={() => handleStartReminderClose()}>
         {startTimeReminder && (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>📋</div>
+            <div style={{ fontSize: 52, marginBottom: 12 }}><ClipboardList size={52} color="var(--accent)" /></div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'var(--white)', marginBottom: 6 }}>
               Time to Start!
             </div>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 4 }}>{startTimeReminder.title}</div>
             {startTimeReminder.description && <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 12 }}>{startTimeReminder.description}</div>}
             <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 12 }}>
-              ⏱️ <strong>Start:</strong> {startTimeReminder.startTime?.slice(0, 5)} &nbsp; <strong>End:</strong> {startTimeReminder.endTime?.slice(0, 5)}
+              <Clock size={13} style={{ display: 'inline', verticalAlign: 'middle' }} /> <strong>Start:</strong> {startTimeReminder.startTime?.slice(0, 5)} &nbsp; <strong>End:</strong> {startTimeReminder.endTime?.slice(0, 5)}
             </div>
             {startTimeReminder.goalContext && <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 12, fontStyle: 'italic' }}>"{startTimeReminder.goalContext}"</div>}
             <Divider style={{ margin: '16px 0' }} />
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <Btn onClick={() => handleStartReminderClose()}>✓ Start Task</Btn>
+              <Btn onClick={() => handleStartReminderClose()}><Check size={14} /> Start Task</Btn>
               <Btn variant="ghost" onClick={() => handleStartReminderClose()}>Dismiss</Btn>
             </div>
           </div>
@@ -639,7 +675,7 @@ export default function TasksPage() {
               </div>
               {changeEndTimeModal.endTimeChanges >= 2 ? (
                 <div style={{ padding: 12, background: 'var(--red-s)', borderRadius: 8, borderLeft: '3px solid var(--red)', fontSize: 13, color: 'var(--text2)' }}>
-                  ⛔ Maximum 2 end time changes reached. Cannot modify further.
+                  <Ban size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Maximum 2 end time changes reached. Cannot modify further.
                 </div>
               ) : (
                 <>
@@ -696,7 +732,7 @@ export default function TasksPage() {
             />
             <div style={{ padding: '16px 20px' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--white)', marginBottom: 4 }}>
-                {CATEGORY_ICONS[lightboxTask.category] || '📌'} {lightboxTask.title}
+                {(() => { const CatIcon = CATEGORY_ICONS[lightboxTask.category] || Pin; return <CatIcon size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> })()} {lightboxTask.title}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 16 }}>
                 {lightboxTask.taskDate} &nbsp;·&nbsp; {(lightboxTask.endTime || lightboxTask.startTime || lightboxTask.taskTime)?.slice(0, 5)}
@@ -711,7 +747,7 @@ export default function TasksPage() {
                     a.click()
                   }}
                 >
-                  ⬇ Download
+                  <Download size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Download
                 </Btn>
                 <Btn variant="ghost" full onClick={() => setLightboxTask(null)}>Close</Btn>
               </div>
@@ -721,31 +757,39 @@ export default function TasksPage() {
       )}
 
       {/* Camera Modal */}
-      <Modal open={showCameraModal} onClose={closeCameraModal} title={photoPreview ? '📸 Photo Preview' : '📷 Capture Photo'}>
+      <Modal open={showCameraModal} onClose={closeCameraModal} title={photoPreview ? 'Photo Preview' : 'Capture Photo'}>
         {!photoPreview ? (
           <div>
             {!cameraStream ? (
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>📷</div>
+                <div style={{ fontSize: 48, marginBottom: 16 }}><Camera size={48} color="var(--text2)" /></div>
                 <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20 }}>
                   Take a photo to share your task completion
                 </div>
                 <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
-                  <Btn full onClick={startCamera}>📷 Open Camera</Btn>
-                  <input
-                    type="file"
-                    id="gallery-upload"
-                    accept="image/*"
-                    onChange={handleGalleryUpload}
-                    style={{ display: 'none' }}
-                  />
-                  <Btn 
-                    full 
-                    variant="ghost" 
-                    onClick={() => document.getElementById('gallery-upload').click()}
-                  >
-                    📁 Upload from Gallery
-                  </Btn>
+                  <Btn full onClick={startCamera}><Camera size={14} /> Open Camera</Btn>
+                  {Capacitor.isNativePlatform() ? (
+                    <Btn full variant="ghost" onClick={() => handleGalleryUpload()}>
+                      <FolderOpen size={14} /> Choose from Gallery
+                    </Btn>
+                  ) : (
+                    <>
+                      <input
+                        type="file"
+                        id="gallery-upload"
+                        accept="image/*"
+                        onChange={handleGalleryUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <Btn 
+                        full 
+                        variant="ghost" 
+                        onClick={() => document.getElementById('gallery-upload').click()}
+                      >
+                        <FolderOpen size={14} /> Upload from Gallery
+                      </Btn>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
@@ -770,7 +814,7 @@ export default function TasksPage() {
                 />
                 <div style={{ display: 'flex', gap: 10 }}>
                   <Btn full onClick={capturePhoto} variant="success">
-                    📸 Capture Photo
+                    <Camera size={14} /> Capture Photo
                   </Btn>
                   <Btn
                     full
@@ -802,11 +846,11 @@ export default function TasksPage() {
               alt="Preview"
             />
             <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16 }}>
-              ✅ Photo captured! Ready to mark this task as done?
+              <CheckCircle2 size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Photo captured! Ready to mark this task as done?
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <Btn full onClick={confirmAndMarkDone} variant="success">
-                ✓ Confirm & Mark Done
+                                <Check size={14} /> Confirm & Mark Done
               </Btn>
               <Btn
                 full
@@ -818,7 +862,7 @@ export default function TasksPage() {
                   }
                 }}
               >
-                🔄 Retake
+                <RefreshCw size={14} /> Retake
               </Btn>
             </div>
           </div>

@@ -6,6 +6,23 @@ export const useAuthStore = create((set) => ({
   user: null,
   token: localStorage.getItem('ff_token'),
   loading: false,
+  initializing: true,
+
+  // Call once on app mount — validates token, clears if invalid
+  init: async () => {
+    const token = localStorage.getItem('ff_token')
+    if (!token) {
+      set({ initializing: false, token: null })
+      return
+    }
+    try {
+      const { data } = await userApi.me()
+      set({ user: data, initializing: false })
+    } catch {
+      localStorage.removeItem('ff_token')
+      set({ token: null, user: null, initializing: false })
+    }
+  },
 
   login: async (email, password) => {
     set({ loading: true })

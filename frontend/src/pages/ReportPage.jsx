@@ -5,6 +5,7 @@ import { Btn, Card, PageHeader, StatCard, Divider, Spinner, Badge } from '../com
 import toast from 'react-hot-toast'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isThisWeek } from 'date-fns'
+import { CheckCircle2, TrendingUp, Flame, ClipboardList, Sparkles, Lock, BarChart3 } from 'lucide-react'
 
 function getMonday(date) {
   const d = startOfWeek(date, { weekStartsOn: 1 })
@@ -91,10 +92,10 @@ export default function ReportPage() {
         <>
           {/* Summary cards */}
           <div className="stats-row" style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
-            <StatCard label="Tasks Done"    value={report.completedTasks} icon="✅" color="var(--green)" />
-            <StatCard label="Completion"    value={`${pct}%`}             icon="📈" color="var(--accent)" />
-            <StatCard label="Day Streak"    value={`${report.streakDays ?? 0} 🔥`} icon="" color="var(--gold)" />
-            <StatCard label="Total Planned" value={report.totalTasks}     icon="📋" color="var(--text2)" />
+            <StatCard label="Tasks Done"    value={report.completedTasks} icon={<CheckCircle2 size={22} />} color="var(--green)" />
+            <StatCard label="Completion"    value={`${pct}%`}             icon={<TrendingUp size={22} />} color="var(--accent)" />
+            <StatCard label="Day Streak"    value={<>{report.streakDays ?? 0} <Flame size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /></>} icon="" color="var(--gold)" />
+            <StatCard label="Total Planned" value={report.totalTasks}     icon={<ClipboardList size={22} />} color="var(--text2)" />
           </div>
 
           {/* Bar chart */}
@@ -143,8 +144,8 @@ export default function ReportPage() {
           {/* AI Narrative */}
           {isPro ? (
             <Card glow={!!report.aiNarrative}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--white)', marginBottom: 14 }}>
-                ✨ AI Insights
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--white)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={16} /> AI Insights
               </div>
               {report.aiNarrative ? (
                 <div style={{ fontSize: 14, lineHeight: 1.9, color: 'var(--text)' }}>
@@ -156,14 +157,14 @@ export default function ReportPage() {
             </Card>
           ) : (
             <Card style={{ textAlign: 'center', padding: 32 }}>
-              <div style={{ color: 'var(--text2)', marginBottom: 12 }}>🔒 AI-powered insights available on Pro plan</div>
+              <div style={{ color: 'var(--text2)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}><Lock size={16} /> AI-powered insights available on Pro plan</div>
               <Btn onClick={() => window.location.href = '/subscription'}>Upgrade to Pro</Btn>
             </Card>
           )}
         </>
       ) : (
         <Card style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+          <div style={{ fontSize: 40, marginBottom: 12 }}><BarChart3 size={40} color="var(--text2)" /></div>
           <div style={{ color: 'var(--text2)', marginBottom: 16 }}>No report data yet. Add tasks and check back!</div>
           <Btn onClick={loadReport}>Generate Report</Btn>
         </Card>

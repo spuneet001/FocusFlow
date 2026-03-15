@@ -68,7 +68,8 @@ export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Toaster
-        position="top-right"
+        position="top-center"
+        containerStyle={{ top: '50%', transform: 'translateY(-50%)' }}
         toastOptions={{
           style: { background: 'var(--card2)', color: 'var(--text)', border: '1px solid var(--border2)', fontSize: 13 },
         }}

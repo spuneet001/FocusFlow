@@ -13,6 +13,20 @@ export async function requestNotificationPermission() {
 }
 
 /**
+ * Register a handler for when a notification is tapped.
+ * The callback receives { taskId, type } where type is 'start' or 'end'.
+ */
+export function onNotificationTapped(callback) {
+  if (!Capacitor.isNativePlatform()) return
+  LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
+    const extra = event.notification?.extra
+    if (extra?.taskId && extra?.type) {
+      callback({ taskId: extra.taskId, type: extra.type })
+    }
+  })
+}
+
+/**
  * Schedule start + end notifications for a single task.
  * Uses task.id * 10 + offset for unique notification IDs.
  */
@@ -36,10 +50,11 @@ export async function scheduleTaskNotifications(task) {
       notifications.push({
         id: task.id * 10 + 1,
         title: 'Time to Start!',
-        body: `${task.title} — starts now`,
+        body: `${task.title} — tap to begin your task`,
         schedule: { at: startDate },
         sound: 'default',
-        channelId: 'task-reminders',
+        channelId: 'task-alarms',
+        extra: { taskId: task.id, type: 'start' },
       })
     }
   }
@@ -52,10 +67,11 @@ export async function scheduleTaskNotifications(task) {
       notifications.push({
         id: task.id * 10 + 2,
         title: "Time's Up!",
-        body: `${task.title} — deadline reached`,
+        body: `${task.title} — tap to mark done or take a photo`,
         schedule: { at: endDate },
         sound: 'default',
-        channelId: 'task-reminders',
+        channelId: 'task-alarms',
+        extra: { taskId: task.id, type: 'end' },
       })
     }
   }
@@ -91,15 +107,16 @@ export async function scheduleAllTaskNotifications(tasks) {
   const granted = await requestNotificationPermission()
   if (!granted) return
 
-  // Create the notification channel for Android
+  // Create alarm-style notification channel for Android
   try {
     await LocalNotifications.createChannel({
-      id: 'task-reminders',
-      name: 'Task Reminders',
-      description: 'Start and end time reminders for your tasks',
-      importance: 5, // Max importance
+      id: 'task-alarms',
+      name: 'Task Alarms',
+      description: 'Alarm-style reminders for task start and end times',
+      importance: 5, // IMPORTANCE_HIGH — heads-up notification
       sound: 'default',
       vibration: true,
+      lights: true,
     })
   } catch {
     // Channel creation only works on Android, ignore on iOS

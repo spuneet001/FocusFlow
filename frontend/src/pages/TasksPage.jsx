@@ -5,7 +5,7 @@ import { Btn, Card, Modal, Badge, Label, Divider, PageHeader, StatCard, Empty, S
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { playSound } from '../utils/soundUtils'
-import { scheduleTaskNotifications, cancelTaskNotifications, scheduleAllTaskNotifications, requestNotificationPermission } from '../utils/notificationUtils'
+import { scheduleTaskNotifications, cancelTaskNotifications, scheduleAllTaskNotifications, requestNotificationPermission, onNotificationTapped } from '../utils/notificationUtils'
 import { takePhoto, pickFromGallery } from '../utils/cameraUtils'
 import { Capacitor } from '@capacitor/core'
 import { Bell, Music, Megaphone, Music2, Volume2, Activity, Briefcase, BookOpen, Salad, Heart, Bot, Pencil, ClipboardList, Clock, CheckCircle2, Pin, AlarmClock, Camera, FolderOpen, Download, RefreshCw, Ban, Image as ImageIcon, Sparkles, X as XIcon, Check, ArrowRight } from 'lucide-react'
@@ -52,6 +52,23 @@ export default function TasksPage() {
       scheduleAllTaskNotifications(tasks)
     }
   }, [tasks])
+
+  // Keep a ref to latest tasks for the notification tap handler
+  const tasksRef = useRef(tasks)
+  useEffect(() => { tasksRef.current = tasks }, [tasks])
+
+  // Handle notification taps — show the correct alarm modal
+  useEffect(() => {
+    onNotificationTapped(({ taskId, type }) => {
+      const task = tasksRef.current.find(t => t.id === taskId)
+      if (!task) return
+      if (type === 'start') {
+        setStartTimeReminder(task)
+      } else if (type === 'end') {
+        setAlarmTask(task)
+      }
+    })
+  }, [])
 
   // Alarm checker - Check both start and end times
   useEffect(() => {
@@ -258,9 +275,9 @@ export default function TasksPage() {
         const dataUrl = await takePhoto()
         if (dataUrl) setPhotoPreview(dataUrl)
       } catch (err) {
-        if (err.message !== 'User cancelled photos app') {
-          toast.error('Camera error: ' + (err.message || 'Unknown'))
-        }
+        if (err.message === 'User cancelled photos app') return
+        // Camera not available (e.g. simulator) — suggest gallery
+        toast.error('Camera not available — try choosing from gallery')
       }
       return
     }
@@ -578,16 +595,16 @@ export default function TasksPage() {
             <Label>Date</Label>
             <input type="date" value={form.taskDate} onChange={(e) => f('taskDate', e.target.value)} />
           </div>
-          <div className="form-row-inline" style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-            <div style={{ flex: 1 }}>
-              <Label>Start Time</Label>
-              <input type="time" value={form.startTime} onChange={(e) => f('startTime', e.target.value)} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Label>End Time</Label>
-              <input type="time" value={form.endTime} onChange={(e) => f('endTime', e.target.value)} />
-            </div>
+         <div className="form-row-inline" style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+          <div style={{ flex: '0 1 auto', minWidth: 0 }}>
+            <Label>Start Time</Label>
+            <input type="time" value={form.startTime} onChange={(e) => f('startTime', e.target.value)} style={{ padding: '8px 8px' }} />
           </div>
+          <div style={{ flex: '0 1 auto', minWidth: 0 }}>
+            <Label>End Time</Label>
+            <input type="time" value={form.endTime} onChange={(e) => f('endTime', e.target.value)} style={{ padding: '8px 8px' }} />
+          </div>
+        </div>
           <div className="form-row-inline" style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1 }}>
               <Label>Priority</Label>
@@ -615,8 +632,8 @@ export default function TasksPage() {
         </form>
       </Modal>
 
-      {/* Alarm Popup */}
-      <Modal open={!!alarmTask} onClose={() => setAlarmTask(null)}>
+      {/* Alarm Popup — hide when camera modal is open so it doesn't block */}
+      <Modal open={!!alarmTask && !showCameraModal} onClose={() => setAlarmTask(null)}>
         {alarmTask && (
           <div style={{ textAlign: 'center' }}>
             <div className="alarm-pulse" style={{ fontSize: 52, marginBottom: 12, display: 'inline-block' }}><AlarmClock size={52} color="var(--accent)" /></div>
